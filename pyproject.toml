@@ -1,0 +1,8 @@
+[project]
+name = "vinyl"
+version = "0.1.0"
+author = "avery.clapp@gmail.com"
+description = "A native MacOS widget for Apple Music song info for streaming"
+readme = "README.md"
+requires-python = ">=3.11.4"
+dependencies = []
