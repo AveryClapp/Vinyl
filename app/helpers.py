@@ -8,6 +8,25 @@ def format_time(time):
     return f'{minutes}:{seconds:02d}'
 
 
+def get_current_track():
+    result = subprocess.run(
+        ["app/scripts/get_song.sh"],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        return None
+
+    response = result.stdout.strip()
+    if response == "Not playing":
+        return None
+
+    return response.split(":")[0]
+
+
 def get_artwork():
     subprocess.run(
         ["app/scripts/get_artwork.sh"],

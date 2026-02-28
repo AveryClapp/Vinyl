@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from app.helpers import format_time, get_artwork, get_song_length, get_song_progress
+from app.helpers import format_time, get_artwork, get_current_track, get_song_length, get_song_progress
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -51,9 +51,10 @@ async def artwork():
 
 
 @app.get("/song/progress")
-async def progress():
+async def progress(track: str = ""):
     cur_progress = get_song_progress()
     total_length = get_song_length()
+    current_track = get_current_track()
 
     percent = min((cur_progress / total_length) * 100, 100) if total_length > 0 else 0
 
@@ -66,7 +67,10 @@ async def progress():
   <span>{format_time(total_length)}</span>
 </div>"""
 
-    if cur_progress >= total_length and total_length > 0:
+    song_ended = cur_progress >= total_length and total_length > 0
+    song_changed = bool(track and current_track and current_track != track)
+
+    if song_ended or song_changed:
         return Response(
             content=fragment,
             media_type="text/html",

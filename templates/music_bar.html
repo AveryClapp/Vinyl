@@ -50,6 +50,7 @@
         object-fit: cover;
         flex-shrink: 0;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+        background: rgba(255, 255, 255, 0.08);
       }
 
       .info {
@@ -60,14 +61,24 @@
         gap: 2px;
       }
 
+      .track-name-wrapper {
+        overflow: hidden;
+        white-space: nowrap;
+      }
+
       .track-name {
+        display: inline-block;
         color: rgba(255, 255, 255, 0.95);
         font-size: 13px;
         font-weight: 700;
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
         letter-spacing: -0.02em;
+        animation: marquee 12s linear infinite;
+      }
+
+      @keyframes marquee {
+        0%, 20%  { transform: translateX(0); }
+        100%     { transform: translateX(-50%); }
       }
 
       .artist-name {
@@ -120,15 +131,19 @@
       hx-select="#song-ui"
       hx-swap="outerHTML"
     >
-      <img class="artwork" src="/song/artwork" alt="" />
+      <img class="artwork" src="/song/artwork" alt="" onerror="this.style.visibility='hidden'" />
       <div class="info">
-        <div class="track-name">{{ result[0] }}</div>
+        <div class="track-name-wrapper">
+          <span class="track-name">{{ result[0] }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ result[0] }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+        </div>
         <div class="artist-name">{{ result[1] }}</div>
         <div
           id="progress-zone"
+          data-track="{{ result[0] }}"
           hx-get="/song/progress"
           hx-trigger="every 1s"
           hx-swap="innerHTML"
+          hx-vals="js:{track: document.getElementById('progress-zone').dataset.track}"
         >
           <div class="progress-track">
             <div class="progress-fill" style="width: 0%;"></div>
