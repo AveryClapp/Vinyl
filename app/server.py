@@ -70,9 +70,8 @@ async def progress(track: str = ""):
 
     song_ended = cur_progress >= total_length and total_length > 0
     song_changed = bool(track and current_track and current_track != track)
-    song_stopped = bool(track and current_track is None and cur_progress == 0)
 
-    if song_ended or song_changed or song_stopped:
+    if song_ended or song_changed:
         return Response(
             content=fragment,
             media_type="text/html",

@@ -50,7 +50,7 @@ def get_artwork(track: str, artist: str):
 def get_song_progress():
     result = subprocess.run(
         ["app/scripts/song_progress.sh"],
-        check=True,
+        check=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -65,7 +65,7 @@ def get_song_progress():
 def get_song_length():
     result = subprocess.run(
         ["app/scripts/song_length.sh"],
-        check=True,
+        check=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,

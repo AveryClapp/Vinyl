@@ -61,7 +61,7 @@
         gap: 2px;
       }
 
-      .track-name-wrapper {
+      .marquee-wrapper {
         overflow: hidden;
         white-space: nowrap;
       }
@@ -73,22 +73,24 @@
         font-weight: 700;
         white-space: nowrap;
         letter-spacing: -0.02em;
+      }
+
+      .artist-name {
+        display: inline-block;
+        color: rgba(255, 255, 255, 0.45);
+        font-size: 11px;
+        font-weight: 400;
+        white-space: nowrap;
+        letter-spacing: 0.01em;
+      }
+
+      .scrolling {
         animation: marquee 12s linear infinite;
       }
 
       @keyframes marquee {
         0%, 20%  { transform: translateX(0); }
         100%     { transform: translateX(-50%); }
-      }
-
-      .artist-name {
-        color: rgba(255, 255, 255, 0.45);
-        font-size: 11px;
-        font-weight: 400;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        letter-spacing: 0.01em;
       }
 
       #progress-zone {
@@ -133,10 +135,12 @@
     >
       <img class="artwork" src="/song/artwork" alt="" onerror="this.style.visibility='hidden'" />
       <div class="info">
-        <div class="track-name-wrapper">
-          <span class="track-name">{{ result[0] }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ result[0] }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+        <div class="marquee-wrapper">
+          <span class="track-name" data-text="{{ result[0] }}">{{ result[0] }}</span>
         </div>
-        <div class="artist-name">{{ result[1] }}</div>
+        <div class="marquee-wrapper">
+          <span class="artist-name" data-text="{{ result[1] }}">{{ result[1] }}</span>
+        </div>
         <div
           id="progress-zone"
           hx-get="/song/progress?track={{ track_encoded }}"
@@ -153,5 +157,15 @@
         </div>
       </div>
     </div>
+    <script>
+      document.querySelectorAll('.track-name, .artist-name').forEach(function(span) {
+        var wrapper = span.parentElement;
+        if (span.scrollWidth > wrapper.offsetWidth) {
+          var text = span.dataset.text;
+          span.textContent = text + '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0' + text + '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
+          span.classList.add('scrolling');
+        }
+      });
+    </script>
   </body>
 </html>
