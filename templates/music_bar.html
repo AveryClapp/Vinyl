@@ -141,23 +141,27 @@
         <div class="marquee-wrapper">
           <span class="artist-name" data-text="{{ result[1] }}">{{ result[1] }}</span>
         </div>
-        <div
-          id="progress-zone"
-          hx-get="/song/progress?track={{ track_encoded }}"
-          hx-trigger="every 1s"
-          hx-swap="innerHTML"
-        >
+        <div id="progress-zone">
           <div class="progress-track">
-            <div class="progress-fill" style="width: 0%;"></div>
+            <div class="progress-fill" style="width: {{ initial_pct }}%;"></div>
           </div>
           <div class="time-row">
-            <span>0:00</span>
-            <span>0:00</span>
+            <span id="current-time"></span>
+            <span id="total-time"></span>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Lightweight poll: detects mid-song track changes every 5s -->
+    <div
+      hx-get="/song/check?track={{ track_encoded }}"
+      hx-trigger="every 5s"
+      hx-swap="none"
+    ></div>
+
     <script>
+      // Marquee: only scroll if text overflows its container
       document.querySelectorAll('.track-name, .artist-name').forEach(function(span) {
         var wrapper = span.parentElement;
         if (span.scrollWidth > wrapper.offsetWidth) {
@@ -166,6 +170,39 @@
           span.classList.add('scrolling');
         }
       });
+
+      // Client-side progress: update in place so CSS transition works
+      (function () {
+        var fill = document.querySelector('.progress-fill');
+        var timeEl = document.getElementById('current-time');
+        var cur = {{ cur_progress }};
+        var total = {{ total_length }};
+
+        function fmt(s) {
+          var m = Math.floor(s / 60);
+          var sec = s % 60;
+          return m + ':' + (sec < 10 ? '0' : '') + sec;
+        }
+
+        // Set initial display
+        timeEl.textContent = fmt(cur);
+        document.getElementById('total-time').textContent = fmt(total);
+
+        var timer = setInterval(function () {
+          if (!document.getElementById('progress-zone')) {
+            clearInterval(timer);
+            return;
+          }
+          cur = Math.min(cur + 1, total);
+          var pct = total > 0 ? (cur / total) * 100 : 0;
+          fill.style.width = pct.toFixed(1) + '%';
+          timeEl.textContent = fmt(cur);
+          if (cur >= total && total > 0) {
+            clearInterval(timer);
+            htmx.trigger(document.body, 'song-finished');
+          }
+        }, 1000);
+      })();
     </script>
   </body>
 </html>

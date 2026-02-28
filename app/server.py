@@ -18,7 +18,7 @@ async def render(request: Request):
     SCRIPT_PATH = "app/scripts/get_song.sh"
     result = subprocess.run(
         [SCRIPT_PATH],
-        check=True,
+        check=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -33,10 +33,21 @@ async def render(request: Request):
 
     song = list(response.split(":"))
     get_artwork(song[0], song[1] if len(song) > 1 else "")
+
+    cur_progress = get_song_progress()
+    total_length = get_song_length()
+    initial_pct = round((cur_progress / total_length) * 100, 1) if total_length > 0 else 0
+
     return templates.TemplateResponse(
         request=request,
         name="music_bar.html",
-        context={"result": song, "track_encoded": urlquote(song[0])},
+        context={
+            "result": song,
+            "track_encoded": urlquote(song[0]),
+            "cur_progress": cur_progress,
+            "total_length": total_length,
+            "initial_pct": initial_pct,
+        },
     )
 
 
@@ -51,31 +62,9 @@ async def artwork():
     )
 
 
-@app.get("/song/progress")
-async def progress(track: str = ""):
-    cur_progress = get_song_progress()
-    total_length = get_song_length()
+@app.get("/song/check")
+async def check(track: str = ""):
     current_track = get_current_track()
-
-    percent = min((cur_progress / total_length) * 100, 100) if total_length > 0 else 0
-
-    fragment = f"""
-<div class="progress-track">
-  <div class="progress-fill" style="width: {percent:.1f}%;"></div>
-</div>
-<div class="time-row">
-  <span>{format_time(cur_progress)}</span>
-  <span>{format_time(total_length)}</span>
-</div>"""
-
-    song_ended = cur_progress >= total_length and total_length > 0
-    song_changed = bool(track and current_track and current_track != track)
-
-    if song_ended or song_changed:
-        return Response(
-            content=fragment,
-            media_type="text/html",
-            headers={"HX-Trigger": "song-finished"},
-        )
-
-    return HTMLResponse(content=fragment)
+    if track and current_track and current_track != track:
+        return Response(content="", headers={"HX-Trigger": "song-finished"})
+    return Response(content="")
