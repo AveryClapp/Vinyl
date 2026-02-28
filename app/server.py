@@ -6,7 +6,8 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from app.helpers import ARTWORK_PATH, format_time, get_artwork, get_current_track, get_song_length, get_song_progress
+from app.helpers import (ARTWORK_PATH, format_time, get_artwork,
+                         get_current_track, get_song_length, get_song_progress)
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -31,7 +32,8 @@ async def render(request: Request):
     if response == "Not playing":
         return templates.TemplateResponse(request=request, name="base_state.html")
 
-    song = list(response.split(":"))
+    song = list(response.split("|||", 1))
+    print(song)
     get_artwork(song[0], song[1] if len(song) > 1 else "")
 
     cur_progress = get_song_progress()
