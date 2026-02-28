@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      src="https://unpkg.com/htmx.org@2.0.0"
+      integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div
+      id="song-ui"
+      hx-get="/"
+      hx-trigger="song-finished from:body"
+      hx-swap="outerHTML"
+    >
+      <h3>{{result[0]}} by {{result[1]}}</h3>
+      <p>
+        Length:
+        <span id="song-length" hx-get="/song/length" hx-trigger="load"
+          >--:--</span
+        >
+      </p>
+
+      <!-- Progress Poller: Updates every 1 second -->
+      <div hx-get="/song/progress" hx-trigger="every 1s" hx-swap="innerHTML">
+        00:00
+      </div>
+    </div>
+  </body>
+</html>
