@@ -1,5 +1,6 @@
 import os
 import subprocess
+from urllib.parse import quote as urlquote
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
@@ -34,7 +35,9 @@ async def render(request: Request):
 
     song = list(response.split(":"))
     return templates.TemplateResponse(
-        request=request, name="music_bar.html", context={"result": song}
+        request=request,
+        name="music_bar.html",
+        context={"result": song, "track_encoded": urlquote(song[0])},
     )
 
 
@@ -69,8 +72,9 @@ async def progress(track: str = ""):
 
     song_ended = cur_progress >= total_length and total_length > 0
     song_changed = bool(track and current_track and current_track != track)
+    song_stopped = bool(track and current_track is None and cur_progress == 0)
 
-    if song_ended or song_changed:
+    if song_ended or song_changed or song_stopped:
         return Response(
             content=fragment,
             media_type="text/html",

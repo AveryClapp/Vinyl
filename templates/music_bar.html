@@ -139,11 +139,9 @@
         <div class="artist-name">{{ result[1] }}</div>
         <div
           id="progress-zone"
-          data-track="{{ result[0] }}"
-          hx-get="/song/progress"
+          hx-get="/song/progress?track={{ track_encoded }}"
           hx-trigger="every 1s"
           hx-swap="innerHTML"
-          hx-vals="js:{track: document.getElementById('progress-zone').dataset.track}"
         >
           <div class="progress-track">
             <div class="progress-fill" style="width: 0%;"></div>
