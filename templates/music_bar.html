@@ -3,30 +3,141 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Syne+Mono&display=swap"
+      rel="stylesheet"
+    />
     <script
       src="https://unpkg.com/htmx.org@2.0.0"
       integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw"
       crossorigin="anonymous"
     ></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: transparent;
+        display: inline-block;
+        padding: 8px;
+      }
+
+      #song-ui {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 16px 12px 12px;
+        background: rgba(8, 8, 12, 0.55);
+        backdrop-filter: blur(32px) saturate(160%);
+        -webkit-backdrop-filter: blur(32px) saturate(160%);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow:
+          0 8px 32px rgba(0, 0, 0, 0.45),
+          inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        width: 300px;
+        font-family: "Syne", sans-serif;
+      }
+
+      .artwork {
+        width: 68px;
+        height: 68px;
+        border-radius: 8px;
+        object-fit: cover;
+        flex-shrink: 0;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+      }
+
+      .info {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .track-name {
+        color: rgba(255, 255, 255, 0.95);
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        letter-spacing: -0.02em;
+      }
+
+      .artist-name {
+        color: rgba(255, 255, 255, 0.45);
+        font-size: 11px;
+        font-weight: 400;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        letter-spacing: 0.01em;
+      }
+
+      #progress-zone {
+        margin-top: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .progress-track {
+        height: 3px;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 100px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: rgba(255, 255, 255, 0.88);
+        border-radius: 100px;
+        transition: width 0.95s linear;
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.25);
+      }
+
+      .time-row {
+        display: flex;
+        justify-content: space-between;
+        font-family: "Syne Mono", monospace;
+        font-size: 9px;
+        color: rgba(255, 255, 255, 0.3);
+        letter-spacing: 0.04em;
+      }
+    </style>
   </head>
   <body>
     <div
       id="song-ui"
-      hx-get="/"
+      hx-get="/overlay"
       hx-trigger="song-finished from:body"
+      hx-select="#song-ui"
       hx-swap="outerHTML"
     >
-      <h3>{{result[0]}} by {{result[1]}}</h3>
-      <p>
-        Length:
-        <span id="song-length" hx-get="/song/length" hx-trigger="load"
-          >--:--</span
+      <img class="artwork" src="/song/artwork" alt="" />
+      <div class="info">
+        <div class="track-name">{{ result[0] }}</div>
+        <div class="artist-name">{{ result[1] }}</div>
+        <div
+          id="progress-zone"
+          hx-get="/song/progress"
+          hx-trigger="every 1s"
+          hx-swap="innerHTML"
         >
-      </p>
-
-      <!-- Progress Poller: Updates every 1 second -->
-      <div hx-get="/song/progress" hx-trigger="every 1s" hx-swap="innerHTML">
-        00:00
+          <div class="progress-track">
+            <div class="progress-fill" style="width: 0%;"></div>
+          </div>
+          <div class="time-row">
+            <span>0:00</span>
+            <span>0:00</span>
+          </div>
+        </div>
       </div>
     </div>
   </body>

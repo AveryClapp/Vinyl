@@ -2,49 +2,46 @@ import subprocess
 
 
 def format_time(time):
+    time = int(time)
     minutes = time // 60
     seconds = time % 60
-    if seconds < 10:
-        return f'{minutes}:0{seconds}'
-    return f'{minutes}:{seconds}'
+    return f'{minutes}:{seconds:02d}'
+
+
+def get_artwork():
+    subprocess.run(
+        ["app/scripts/get_artwork.sh"],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
 
 def get_song_progress():
-    PROGRESS_PATH = "app/scripts/song_progress.sh"
-    progress_result = subprocess.run(
-        [PROGRESS_PATH],
+    result = subprocess.run(
+        ["app/scripts/song_progress.sh"],
         check=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
     )
 
-
-    # Clean result into standard form
-    if progress_result.returncode != 0:
+    if result.returncode != 0:
         return 0
 
-    response = progress_result.stdout[:-1]
+    return int(result.stdout.strip().split(".")[0])
 
-    cur_time = int(response.split(".")[0])
-    cur_time = round(cur_time, 0)
-    return cur_time
 
 def get_song_length():
-    LENGTH_PATH = "app/scripts/song_length.sh"
-    length_result = subprocess.run(
-        [LENGTH_PATH],
+    result = subprocess.run(
+        ["app/scripts/song_length.sh"],
         check=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
     )
 
-    # Clean result into standard form
-    if length_result.returncode != 0:
+    if result.returncode != 0:
         return 0
 
-    response = length_result.stdout[:-1]
-
-    total_time = int(response.split(".")[0])
-    total_time = round(total_time, 0)
-    return total_time
+    return int(result.stdout.strip().split(".")[0])

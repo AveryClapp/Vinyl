@@ -1,10 +1,11 @@
+import os
 import subprocess
 
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, Response
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from app.helpers import format_time, get_song_length, get_song_progress
+from app.helpers import format_time, get_artwork, get_song_length, get_song_progress
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -22,18 +23,30 @@ async def render(request: Request):
         text=True,
     )
 
-    # Clean result into standard form
     if result.returncode != 0:
         return templates.TemplateResponse(request=request, name="base_state.html")
 
-    response = result.stdout[:-1]
+    response = result.stdout.strip()
     if response == "Not playing":
         return templates.TemplateResponse(request=request, name="base_state.html")
 
-    # Separate trackName and artistName
-    response = list(response.split(":"))
+    get_artwork()
+
+    song = list(response.split(":"))
     return templates.TemplateResponse(
-        request=request, name="music_bar.html", context={"result": response}
+        request=request, name="music_bar.html", context={"result": song}
+    )
+
+
+@app.get("/song/artwork")
+async def artwork():
+    artwork_path = os.path.expanduser("~/.cache/vinyl/current_art.jpg")
+    if not os.path.exists(artwork_path):
+        raise HTTPException(status_code=404)
+    return FileResponse(
+        artwork_path,
+        media_type="image/jpeg",
+        headers={"Cache-Control": "no-store"},
     )
 
 
@@ -42,17 +55,22 @@ async def progress():
     cur_progress = get_song_progress()
     total_length = get_song_length()
 
-    time_str = format_time(cur_progress)
-    if cur_progress >= total_length:
+    percent = min((cur_progress / total_length) * 100, 100) if total_length > 0 else 0
+
+    fragment = f"""
+<div class="progress-track">
+  <div class="progress-fill" style="width: {percent:.1f}%;"></div>
+</div>
+<div class="time-row">
+  <span>{format_time(cur_progress)}</span>
+  <span>{format_time(total_length)}</span>
+</div>"""
+
+    if cur_progress >= total_length and total_length > 0:
         return Response(
-            content=f"<span>{time_str}</span>",
-            headers={"HX-Trigger": "song-finished"} 
+            content=fragment,
+            media_type="text/html",
+            headers={"HX-Trigger": "song-finished"},
         )
 
-    return f'<span id="pblabel">{format_time(cur_progress)}</span>'
-
-
-@app.get("/song/length")
-async def length():
-    return f'<span id="pblabel">{format_time(get_song_length())}</span>'
-
+    return HTMLResponse(content=fragment)

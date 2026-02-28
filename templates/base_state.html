@@ -3,7 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="refresh" content="5;url=/overlay" />
+    <script
+      src="https://unpkg.com/htmx.org@2.0.0"
+      integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw"
+      crossorigin="anonymous"
+    ></script>
   </head>
-  <body style="background: transparent; margin: 0;"></body>
+  <body style="background: transparent; margin: 0;">
+    <div
+      id="song-ui"
+      hx-get="/overlay"
+      hx-trigger="every 5s"
+      hx-select="#song-ui"
+      hx-swap="outerHTML"
+    ></div>
+  </body>
 </html>
