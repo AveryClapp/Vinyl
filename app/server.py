@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from app.helpers import format_time, get_artwork, get_current_track, get_song_length, get_song_progress
+from app.helpers import ARTWORK_PATH, format_time, get_artwork, get_current_track, get_song_length, get_song_progress
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -31,9 +31,8 @@ async def render(request: Request):
     if response == "Not playing":
         return templates.TemplateResponse(request=request, name="base_state.html")
 
-    get_artwork()
-
     song = list(response.split(":"))
+    get_artwork(song[0], song[1] if len(song) > 1 else "")
     return templates.TemplateResponse(
         request=request,
         name="music_bar.html",
@@ -43,11 +42,10 @@ async def render(request: Request):
 
 @app.get("/song/artwork")
 async def artwork():
-    artwork_path = os.path.expanduser("~/.cache/vinyl/current_art.jpg")
-    if not os.path.exists(artwork_path):
+    if not os.path.exists(ARTWORK_PATH):
         raise HTTPException(status_code=404)
     return FileResponse(
-        artwork_path,
+        ARTWORK_PATH,
         media_type="image/jpeg",
         headers={"Cache-Control": "no-store"},
     )
