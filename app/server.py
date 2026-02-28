@@ -33,7 +33,6 @@ async def render(request: Request):
         return templates.TemplateResponse(request=request, name="base_state.html")
 
     song = list(response.split("|||", 1))
-    print(song)
     get_artwork(song[0], song[1] if len(song) > 1 else "")
 
     cur_progress = get_song_progress()
