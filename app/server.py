@@ -62,9 +62,12 @@ async def artwork():
     )
 
 
-@app.get("/song/check")
-async def check(track: str = ""):
+@app.get("/song/position")
+async def song_position():
     current_track = get_current_track()
-    if track and current_track and current_track != track:
-        return Response(content="", headers={"HX-Trigger": "song-finished"})
-    return Response(content="")
+    cur_progress = get_song_progress()
+    return {
+        "playing": current_track is not None,
+        "track": current_track or "",
+        "position": cur_progress,
+    }

@@ -29,24 +29,24 @@
       #song-ui {
         display: flex;
         align-items: center;
-        gap: 14px;
-        padding: 12px 16px 12px 12px;
+        gap: 10px;
+        padding: 8px 12px 8px 8px;
         background: rgba(8, 8, 12, 0.55);
         backdrop-filter: blur(32px) saturate(160%);
         -webkit-backdrop-filter: blur(32px) saturate(160%);
-        border-radius: 16px;
+        border-radius: 12px;
         border: 1px solid rgba(255, 255, 255, 0.08);
         box-shadow:
           0 8px 32px rgba(0, 0, 0, 0.45),
           inset 0 1px 0 rgba(255, 255, 255, 0.06);
-        width: 300px;
+        width: 270px;
         font-family: "Syne", sans-serif;
       }
 
       .artwork {
-        width: 68px;
-        height: 68px;
-        border-radius: 8px;
+        width: 52px;
+        height: 52px;
+        border-radius: 6px;
         object-fit: cover;
         flex-shrink: 0;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
@@ -58,7 +58,7 @@
         min-width: 0;
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 1px;
       }
 
       .marquee-wrapper {
@@ -94,10 +94,10 @@
       }
 
       #progress-zone {
-        margin-top: 10px;
+        margin-top: 6px;
         display: flex;
         flex-direction: column;
-        gap: 5px;
+        gap: 3px;
       }
 
       .progress-track {
@@ -151,32 +151,26 @@
           </div>
         </div>
       </div>
-    </div>
+      <script>
+        if (window._vinylTimer) clearInterval(window._vinylTimer);
+        if (window._vinylSync) clearInterval(window._vinylSync);
 
-    <!-- Lightweight poll: detects mid-song track changes every 5s -->
-    <div
-      hx-get="/song/check?track={{ track_encoded }}"
-      hx-trigger="every 5s"
-      hx-swap="none"
-    ></div>
+        // Marquee: only scroll if text overflows
+        document.querySelectorAll('.track-name, .artist-name').forEach(function(span) {
+          var wrapper = span.parentElement;
+          if (span.scrollWidth > wrapper.offsetWidth) {
+            var text = span.dataset.text;
+            span.textContent = text + '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0' + text + '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
+            span.classList.add('scrolling');
+          }
+        });
 
-    <script>
-      // Marquee: only scroll if text overflows its container
-      document.querySelectorAll('.track-name, .artist-name').forEach(function(span) {
-        var wrapper = span.parentElement;
-        if (span.scrollWidth > wrapper.offsetWidth) {
-          var text = span.dataset.text;
-          span.textContent = text + '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0' + text + '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
-          span.classList.add('scrolling');
-        }
-      });
-
-      // Client-side progress: update in place so CSS transition works
-      (function () {
         var fill = document.querySelector('.progress-fill');
         var timeEl = document.getElementById('current-time');
         var cur = {{ cur_progress }};
         var total = {{ total_length }};
+        var paused = false;
+        var currentTrack = {{ result[0] | tojson }};
 
         function fmt(s) {
           var m = Math.floor(s / 60);
@@ -184,25 +178,44 @@
           return m + ':' + (sec < 10 ? '0' : '') + sec;
         }
 
-        // Set initial display
         timeEl.textContent = fmt(cur);
         document.getElementById('total-time').textContent = fmt(total);
 
-        var timer = setInterval(function () {
-          if (!document.getElementById('progress-zone')) {
-            clearInterval(timer);
-            return;
-          }
+        // Tick every second — only advances when not paused
+        window._vinylTimer = setInterval(function () {
+          if (paused) return;
           cur = Math.min(cur + 1, total);
           var pct = total > 0 ? (cur / total) * 100 : 0;
           fill.style.width = pct.toFixed(1) + '%';
           timeEl.textContent = fmt(cur);
           if (cur >= total && total > 0) {
-            clearInterval(timer);
+            clearInterval(window._vinylTimer);
             htmx.trigger(document.body, 'song-finished');
           }
         }, 1000);
-      })();
-    </script>
+
+        // Sync with server every 3s: handles pause, seek, and track changes
+        window._vinylSync = setInterval(function () {
+          fetch('/song/position')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              if (data.track && data.track !== currentTrack) {
+                clearInterval(window._vinylTimer);
+                clearInterval(window._vinylSync);
+                htmx.trigger(document.body, 'song-finished');
+                return;
+              }
+              paused = !data.playing;
+              if (data.playing) {
+                cur = data.position;
+                var pct = total > 0 ? (cur / total) * 100 : 0;
+                fill.style.width = pct.toFixed(1) + '%';
+                timeEl.textContent = fmt(cur);
+              }
+            })
+            .catch(function() {});
+        }, 3000);
+      </script>
+    </div>
   </body>
 </html>
